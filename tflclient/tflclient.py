@@ -4,10 +4,24 @@ from types import SimpleNamespace
 
 
 API_BASE_URL = 'https://api.tfl.gov.uk'
-LINE_MODE_ENDPOINT = API_BASE_URL + '/Line/Mode/{}'
+LINE_URL = API_BASE_URL + '/Line'
+LINE_DISRUPCAT_ENDPOINT = LINE_URL + '/Meta/DisruptionCategories'
+LINE_MODE_ENDPOINT = LINE_URL + '/Mode/{}'
 LINE_MODE_STATUS_ENDPOINT = LINE_MODE_ENDPOINT + '/Status'
 
 HEADERS = {"Cache-Control": "no-cache"}
+
+
+def get_disruption_categories():
+    """Gets a list of valid disruption categories
+
+    """
+    categories = requests.get(LINE_DISRUPCAT_ENDPOINT,
+                              headers=HEADERS)
+    if not categories:
+        raise Exception('Could not get disruption categories')
+
+    return _to_object(categories)
 
 
 def get_lines_for_modes(*modes):
