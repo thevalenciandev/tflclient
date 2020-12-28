@@ -6,6 +6,7 @@ from types import SimpleNamespace
 API_BASE_URL = 'https://api.tfl.gov.uk'
 LINE_URL = API_BASE_URL + '/Line'
 LINE_DISRUPCAT_ENDPOINT = LINE_URL + '/Meta/DisruptionCategories'
+LINE_SEVERITYCODES_ENDPOINT = LINE_URL + '/Meta/Severity'
 LINE_MODE_ENDPOINT = LINE_URL + '/Mode/{}'
 LINE_MODE_STATUS_ENDPOINT = LINE_MODE_ENDPOINT + '/Status'
 
@@ -18,10 +19,8 @@ def get_disruption_categories():
     """
     categories = requests.get(LINE_DISRUPCAT_ENDPOINT,
                               headers=HEADERS)
-    if not categories:
-        raise Exception('Could not get disruption categories')
 
-    return _to_object(categories)
+    return _to_object_or_throw_with_msg(categories, 'disruption categories')
 
 
 def get_lines_for_modes(*modes):
@@ -31,10 +30,18 @@ def get_lines_for_modes(*modes):
     """
     lines = requests.get(LINE_MODE_ENDPOINT.format(_comma_separated(modes)),
                          headers=HEADERS)
-    if not lines:
-        raise Exception(f'Could not get lines for {modes}')
 
-    return _to_object(lines)
+    return _to_object_or_throw_with_msg(lines, 'lines for {modes}')
+
+
+def get_severity_codes():
+    """Gets a list of valid severity codes
+
+    """
+    severities = requests.get(LINE_SEVERITYCODES_ENDPOINT,
+                              headers=HEADERS)
+
+    return _to_object_or_throw_with_msg(severities, 'severity codes')
 
 
 def get_status(*modes, detail=None, severityLevel=None):
@@ -53,10 +60,8 @@ def get_status(*modes, detail=None, severityLevel=None):
     status = requests.get(LINE_MODE_STATUS_ENDPOINT.format(_comma_separated(modes)),
                           headers=HEADERS,
                           params=params)
-    if not status:
-        raise Exception(f'Could not get status for {modes}')
 
-    return _to_object(status)
+    return _to_object_or_throw_with_msg(status, 'status for {modes}')
 
 
 def get_modes():
@@ -65,10 +70,15 @@ def get_modes():
     """
     modes = requests.get(f'{API_BASE_URL}/Line/Meta/Modes',
                          headers=HEADERS)
-    if not modes:
-        raise Exception('Could not get modes')
 
-    return _to_object(modes)
+    return _to_object_or_throw_with_msg(modes, 'modes')
+
+
+def _to_object_or_throw_with_msg(response, msg):
+    if response.status_code != 200:
+        raise Exception(f'Could not get {msg}. Response: {response}')
+
+    return _to_object(response)
 
 
 def _to_object(result):
