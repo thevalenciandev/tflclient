@@ -64,7 +64,7 @@ def get_line_status(*lines, detail=None):
     return _to_object_or_throw_with_msg(status, 'status for ' + str(lines))
 
 
-def get_status(*modes, detail=None, severityLevel=None):
+def get_mode_status(*modes, detail=None, severityLevel=None):
     r"""Gets the line status of for all lines for the given modes
 
     :param \*modes: List of modes to filter by. eg. tube, overground
