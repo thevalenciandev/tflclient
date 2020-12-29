@@ -7,6 +7,7 @@ API_BASE_URL = 'https://api.tfl.gov.uk'
 LINE_URL = API_BASE_URL + '/Line'
 LINE_DISRUPCAT_ENDPOINT = LINE_URL + '/Meta/DisruptionCategories'
 LINE_SEVERITYCODES_ENDPOINT = LINE_URL + '/Meta/Severity'
+LINE_IDS_STATUS_ENDPOINT = LINE_URL + '/{}/Status'
 LINE_MODE_ENDPOINT = LINE_URL + '/Mode/{}'
 LINE_MODE_STATUS_ENDPOINT = LINE_MODE_ENDPOINT + '/Status'
 
@@ -28,10 +29,10 @@ def get_lines_for_modes(*modes):
 
     :param \*modes: List of modes to filter by. eg. tube, overground
     """
-    lines = requests.get(LINE_MODE_ENDPOINT.format(_comma_separated(modes)),
+    lines = requests.get(LINE_MODE_ENDPOINT.format(_comma_sep(modes)),
                          headers=HEADERS)
 
-    return _to_object_or_throw_with_msg(lines, 'lines for {modes}')
+    return _to_object_or_throw_with_msg(lines, 'lines for ' + str(modes))
 
 
 def get_severity_codes():
@@ -42,6 +43,25 @@ def get_severity_codes():
                               headers=HEADERS)
 
     return _to_object_or_throw_with_msg(severities, 'severity codes')
+
+
+def get_line_status(*lines, detail=None):
+    r"""Gets the line status of for given line ids
+
+    :param \*lines: List of line ids e.g. victoria,circle,N133
+        Max. approx. 20 ids.
+    :param detail: Include details of the disruptions that are causing the line
+        status including the affected stops and routes
+    """
+    params = {}
+    if detail:
+        params['detail'] = str(detail).lower()
+
+    status = requests.get(LINE_IDS_STATUS_ENDPOINT.format(_comma_sep(lines)),
+                          headers=HEADERS,
+                          params=params)
+
+    return _to_object_or_throw_with_msg(status, 'status for ' + str(lines))
 
 
 def get_status(*modes, detail=None, severityLevel=None):
@@ -57,11 +77,11 @@ def get_status(*modes, detail=None, severityLevel=None):
     if severityLevel:
         params['severityLevel'] = severityLevel
 
-    status = requests.get(LINE_MODE_STATUS_ENDPOINT.format(_comma_separated(modes)),
+    status = requests.get(LINE_MODE_STATUS_ENDPOINT.format(_comma_sep(modes)),
                           headers=HEADERS,
                           params=params)
 
-    return _to_object_or_throw_with_msg(status, 'status for {modes}')
+    return _to_object_or_throw_with_msg(status, 'status for ' + str(modes))
 
 
 def get_modes():
@@ -76,7 +96,7 @@ def get_modes():
 
 def _to_object_or_throw_with_msg(response, msg):
     if response.status_code != 200:
-        raise Exception(f'Could not get {msg}. Response: {response}')
+        raise Exception(f'Could not get {msg}. {response}. {response.text}')
 
     return _to_object(response)
 
@@ -86,5 +106,5 @@ def _to_object(result):
                       object_hook=lambda d: SimpleNamespace(**d))
 
 
-def _comma_separated(obj):
+def _comma_sep(obj):
     return ",".join(obj)
